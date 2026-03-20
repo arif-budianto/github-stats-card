@@ -81,8 +81,8 @@ export function renderHeroCard(data, options = {}) {
   </rect>
 
   <rect x="24" y="24" width="1232" height="372" rx="28" fill="url(#hero-panel)" stroke="#2d3e57"/>
-  <path d="M52 318C206 282 360 332 508 304C652 278 770 326 894 304C1010 284 1126 292 1228 312" stroke="#60a5fa" stroke-opacity="0.1" stroke-width="2"/>
-  <path d="M52 344C220 368 326 314 486 332C628 350 770 306 912 324C1034 340 1142 340 1226 332" stroke="#a78bfa" stroke-opacity="0.08" stroke-width="2"/>
+  <path d="M52 370C196 344 344 388 500 366C650 344 780 388 914 368C1036 350 1138 356 1228 372" stroke="#60a5fa" stroke-opacity="0.06" stroke-width="2"/>
+  <path d="M52 388C194 404 324 368 482 382C634 396 770 364 920 378C1044 390 1146 390 1226 384" stroke="#a78bfa" stroke-opacity="0.05" stroke-width="2"/>
   <line x1="812" y1="60" x2="812" y2="360" stroke="#334155" stroke-opacity="0.75"/>
 
   <rect x="72" y="62" width="224" height="3" rx="999" fill="url(#hero-accent)"/>
@@ -95,32 +95,32 @@ export function renderHeroCard(data, options = {}) {
 
   <g transform="translate(844 48)">
     <rect width="364" height="324" rx="24" fill="url(#hero-side)" stroke="#314457"/>
-    <rect x="24" y="22" width="182" height="34" rx="999" fill="#0a1323" fill-opacity="0.9" stroke="#334155"/>
+    <rect x="24" y="22" width="110" height="34" rx="999" fill="#0a1323" fill-opacity="0.9" stroke="#334155"/>
     <circle cx="46" cy="39" r="5" fill="#22d3ee">
       <animate attributeName="opacity" values="0.45;1;0.45" dur="2.8s" repeatCount="indefinite"/>
     </circle>
     <circle cx="46" cy="39" r="11" fill="none" stroke="#22d3ee" stroke-opacity="0.24" stroke-width="1.5"/>
-    <text x="64" y="44" fill="#e2e8f0" font-size="13" font-weight="800" font-family="'Segoe UI',Ubuntu,sans-serif" letter-spacing="0.8">LEGEND PROFILE MODE</text>
+    <text x="64" y="44" fill="#e2e8f0" font-size="13" font-weight="800" font-family="'Segoe UI',Ubuntu,sans-serif" letter-spacing="0.8">PROFILE</text>
 
-    <g transform="translate(255 92)">
-      <circle cx="0" cy="0" r="46" fill="none" stroke="url(#hero-orbit)" stroke-width="2.5" stroke-opacity="0.9" stroke-dasharray="8 10">
+    <g transform="translate(298 72)">
+      <circle cx="0" cy="0" r="38" fill="none" stroke="url(#hero-orbit)" stroke-width="2.5" stroke-opacity="0.9" stroke-dasharray="8 10">
         <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="26s" repeatCount="indefinite"/>
       </circle>
-      <circle cx="0" cy="0" r="62" fill="none" stroke="#7dd3fc" stroke-opacity="0.12" stroke-width="1.5" stroke-dasharray="3 8">
+      <circle cx="0" cy="0" r="52" fill="none" stroke="#7dd3fc" stroke-opacity="0.12" stroke-width="1.5" stroke-dasharray="3 8">
         <animateTransform attributeName="transform" type="rotate" from="360 0 0" to="0 0 0" dur="32s" repeatCount="indefinite"/>
       </circle>
-      <circle cx="0" cy="0" r="33" fill="#101a2d" stroke="#2d3e57"/>
-      <text x="0" y="8" fill="#f8fafc" font-size="24" font-weight="800" font-family="'Segoe UI',Ubuntu,sans-serif" text-anchor="middle">${initials}</text>
+      <circle cx="0" cy="0" r="27" fill="#101a2d" stroke="#2d3e57"/>
+      <text x="0" y="7" fill="#f8fafc" font-size="21" font-weight="800" font-family="'Segoe UI',Ubuntu,sans-serif" text-anchor="middle">${initials}</text>
     </g>
 
-    <text x="24" y="88" fill="#f8fafc" font-size="24" font-weight="800" font-family="'Segoe UI',Ubuntu,sans-serif">GitHub Snapshot</text>
-    <text x="24" y="112" fill="#93a4b8" font-size="14" font-weight="600" font-family="'Segoe UI',Ubuntu,sans-serif">Private-aware metrics for profile view</text>
-    <line x1="24" y1="128" x2="340" y2="128" stroke="#334155" stroke-opacity="0.8"/>
+    <text x="24" y="104" fill="#f8fafc" font-size="24" font-weight="800" font-family="'Segoe UI',Ubuntu,sans-serif">GitHub Snapshot</text>
+    <text x="24" y="128" fill="#93a4b8" font-size="14" font-weight="600" font-family="'Segoe UI',Ubuntu,sans-serif">Private-aware metrics for profile view</text>
+    <line x1="24" y1="144" x2="340" y2="144" stroke="#334155" stroke-opacity="0.8"/>
 
-    ${renderMetricCard(24, 146, 150, 74, "Followers", formatNumber(followers), "#60a5fa")}
-    ${renderMetricCard(190, 146, 150, 74, "Repositories", formatNumber(repositories), "#22d3ee")}
-    ${renderMetricCard(24, 238, 150, 74, "Contributions", formatNumber(contributions), "#a78bfa")}
-    ${renderMetricCard(190, 238, 150, 74, "Mode", "Private-Aware", "#7dd3fc")}
+    ${renderMetricCard(24, 160, 150, 74, "Followers", formatNumber(followers), "#60a5fa")}
+    ${renderMetricCard(190, 160, 150, 74, "Repositories", formatNumber(repositories), "#22d3ee")}
+    ${renderMetricCard(24, 252, 150, 74, "Contributions", formatNumber(contributions), "#a78bfa")}
+    ${renderMetricCard(190, 252, 150, 74, "Mode", "Private-Aware", "#7dd3fc")}
   </g>
 </svg>`;
 }
