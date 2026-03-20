@@ -3,9 +3,12 @@ const REQUEST_TIMEOUT_MS = 8000;
 const LANGS_CACHE_TTL_MS = 1000 * 60 * 30;
 const PROGRESS_CACHE_TTL_MS = 1000 * 60 * 30;
 const HERO_CACHE_TTL_MS = 1000 * 60 * 30;
+const VIEWS_CACHE_TTL_MS = 1000 * 60 * 15;
+const KOMAREV_VIEWS_URL = "https://komarev.com/ghpvc/";
 const langsCache = new Map();
 const progressCache = new Map();
 const heroCache = new Map();
+const viewsCache = new Map();
 
 export async function fetchStats(username) {
   const query = `
@@ -229,6 +232,51 @@ export async function fetchHero(username) {
   }
 }
 
+export async function fetchProfileViews(username) {
+  const cacheKey = String(username || "").toLowerCase();
+  const cached = viewsCache.get(cacheKey);
+  if (cached && Date.now() - cached.fetchedAt < VIEWS_CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const url = `${KOMAREV_VIEWS_URL}?username=${encodeURIComponent(username || "")}&label=PROFILE%20VIEWS&color=0ea5e9&style=flat-square`;
+    const res = await fetch(url, {
+      headers: {
+        Accept: "image/svg+xml",
+      },
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`Views badge responded ${res.status}`);
+    }
+
+    const svg = await res.text();
+    const count = extractViewsCount(svg);
+    const data = {
+      username: username || "",
+      count,
+    };
+
+    viewsCache.set(cacheKey, { data, fetchedAt: Date.now() });
+    return data;
+  } catch (error) {
+    if (cached?.data) {
+      return cached.data;
+    }
+    if (error?.name === "AbortError") {
+      throw new Error("Views counter timeout");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function githubGraphQL(query, variables) {
   const token = resolveGithubToken(variables?.login);
   if (!token) throw new Error(`GitHub token is not configured for ${variables?.login || "this user"}`);
@@ -410,4 +458,17 @@ function calcRank({ stars, commits, prs, issues, contributed }) {
   if (score >= 350)  return "B";
   if (score >= 200)  return "B-";
   return "C";
+}
+
+function extractViewsCount(svg) {
+  const texts = [...String(svg || "").matchAll(/<text\b[^>]*>([^<]+)<\/text>/g)]
+    .map((match) => String(match[1] || "").trim())
+    .filter(Boolean);
+
+  const numeric = texts.filter((text) => /[\d,]+/.test(text));
+  if (numeric.length === 0) {
+    throw new Error("Unable to parse views counter");
+  }
+
+  return numeric[numeric.length - 1];
 }
