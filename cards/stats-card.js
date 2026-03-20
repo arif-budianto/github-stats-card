@@ -1,10 +1,11 @@
 export function renderStatsCard({ name, stars, commits, prs, issues, contributed, rank }) {
   const rankGrade = rank || "B+";
   const bg = "#0d1117";
-  const surface = "#161b22";
+  const surface = "#151b23";
   const border = "#21262d";
   const textPrimary = "#e6edf3";
   const textSecondary = "#7d8590";
+  const accent = "#38bdf8";
 
   const rows = [
     { icon: starIcon(), label: "Total Stars Earned", value: formatNum(stars) },
@@ -15,57 +16,51 @@ export function renderStatsCard({ name, stars, commits, prs, issues, contributed
   ];
 
   const width = 800;
-  const headerH = 64;
-  const rowH = 36;
-  const paddingX = 28;
-  const height = headerH + rows.length * rowH + 24;
+  const paddingX = 34;
+  const headerH = 86;
+  const rowH = 50;
+  const height = headerH + rows.length * rowH + 18;
 
-  const rankR = 32;
-  const rankCx = width - paddingX - rankR - 4;
-  const rankCy = headerH / 2;
+  const rankR = 38;
+  const rankCx = width - paddingX - rankR - 6;
+  const rankCy = headerH / 2 + 2;
   const circ = 2 * Math.PI * rankR;
   const offset = circ * (1 - rankToScore(rankGrade));
+  const title = escapeXml(truncateText(`${name || ""}'s GitHub Stats`, 28));
 
   const rowsSVG = rows.map((row, i) => {
     const y = headerH + i * rowH;
-    const mid = y + rowH / 2;
-    const divider = i < rows.length - 1
-      ? `<line x1="${paddingX}" y1="${y + rowH}" x2="${width - paddingX}" y2="${y + rowH}" stroke="${border}" stroke-width="1" opacity="0.5"/>`
-      : "";
+    const mid = y + rowH / 2 + 1;
+    const divider = `<line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="${border}" stroke-width="1" opacity="${i === 0 ? 0.9 : 0.55}"/>`;
     return `
-    <g transform="translate(0,0)">
-      <g transform="translate(${paddingX},${mid - 7})" fill="${textSecondary}">${row.icon}</g>
-      <text x="${paddingX + 26}" y="${mid + 4}" font-size="13" fill="${textSecondary}" font-family="'Segoe UI',Ubuntu,sans-serif">${row.label}</text>
-      <text x="${width - paddingX}" y="${mid + 4}" font-size="14" font-weight="700" fill="${textPrimary}" font-family="'Segoe UI',Ubuntu,sans-serif" text-anchor="end">${row.value}</text>
+    <g>
       ${divider}
+      <g transform="translate(${paddingX},${mid - 8})" fill="${textSecondary}" opacity="0.92">${row.icon}</g>
+      <text x="${paddingX + 30}" y="${mid}" font-size="15" fill="${textSecondary}" font-family="'Segoe UI',Ubuntu,sans-serif" dominant-baseline="middle">${row.label}</text>
+      <text x="${width - paddingX}" y="${mid}" font-size="16" font-weight="700" fill="${textPrimary}" font-family="'Segoe UI',Ubuntu,sans-serif" text-anchor="end" dominant-baseline="middle">${row.value}</text>
     </g>`;
   }).join("");
 
   return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img">
   <defs>
-    <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#0ea5e9"/>
-      <stop offset="100%" stop-color="#8b5cf6"/>
+    <linearGradient id="stats-accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
     </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
   </defs>
 
   <rect width="${width}" height="${height}" rx="14" fill="${bg}"/>
   <rect width="${width}" height="${height}" rx="14" fill="none" stroke="${border}" stroke-width="1"/>
-  <rect x="0" y="0" width="${width}" height="${headerH}" rx="14" fill="${surface}" opacity="0.7"/>
-  <rect x="0" y="${headerH - 14}" width="${width}" height="14" fill="${surface}" opacity="0.7"/>
+  <path d="M14 0h772c7.732 0 14 6.268 14 14v58H0V14C0 6.268 6.268 0 14 0Z" fill="${surface}"/>
 
-  <rect x="${paddingX}" y="14" width="160" height="2.5" rx="2" fill="url(#sg)"/>
-  <text x="${paddingX}" y="${headerH - 16}" font-size="16" font-weight="700" fill="${textPrimary}" font-family="'Segoe UI',Ubuntu,sans-serif">${escapeXml(name)}'s GitHub Stats</text>
+  <rect x="${paddingX}" y="22" width="120" height="3" rx="999" fill="${accent}"/>
+  <text x="${paddingX}" y="56" font-size="17" font-weight="700" fill="${textPrimary}" font-family="'Segoe UI',Ubuntu,sans-serif">${title}</text>
 
-  <circle cx="${rankCx}" cy="${rankCy}" r="${rankR}" fill="none" stroke="${border}" stroke-width="4"/>
-  <circle cx="${rankCx}" cy="${rankCy}" r="${rankR}" fill="none" stroke="url(#sg)"
-    stroke-width="4" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"
-    stroke-linecap="round" transform="rotate(-90 ${rankCx} ${rankCy})" filter="url(#glow)"/>
-  <text x="${rankCx}" y="${rankCy + 5}" font-size="13" font-weight="800" fill="${textPrimary}"
+  <circle cx="${rankCx}" cy="${rankCy}" r="${rankR}" fill="none" stroke="${border}" stroke-width="6"/>
+  <circle cx="${rankCx}" cy="${rankCy}" r="${rankR}" fill="none" stroke="url(#stats-accent)"
+    stroke-width="6" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"
+    stroke-linecap="round" transform="rotate(-90 ${rankCx} ${rankCy})"/>
+  <text x="${rankCx}" y="${rankCy + 6}" font-size="18" font-weight="800" fill="${textPrimary}"
     font-family="'Segoe UI',Ubuntu,sans-serif" text-anchor="middle">${rankGrade}</text>
 
   ${rowsSVG}
@@ -82,6 +77,9 @@ function formatNum(n) {
 }
 function escapeXml(str) {
   return String(str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function truncateText(text, maxChars) {
+  return text.length > maxChars ? `${text.slice(0, maxChars - 1)}…` : text;
 }
 function starIcon() { return `<svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>`; }
 function commitIcon() { return `<svg width="14" height="14" viewBox="0 0 16 16"><path d="M11.93 8.5a4.002 4.002 0 0 1-7.86 0H.75a.75.75 0 0 1 0-1.5h3.32a4.002 4.002 0 0 1 7.86 0h3.32a.75.75 0 0 1 0 1.5Zm-1.43-.75a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z"/></svg>`; }
