@@ -1,10 +1,10 @@
 export function renderStatsCard({ name, stars, commits, prs, issues, contributed, rank }) {
   const rankGrade = rank || "B+";
-  const bg = "#0d1117";
-  const surface = "#151b23";
-  const border = "#21262d";
-  const textPrimary = "#e6edf3";
-  const textSecondary = "#7d8590";
+  const bg = "#0f172a";
+  const surface = "#162033";
+  const border = "#243247";
+  const textPrimary = "#e2e8f0";
+  const textSecondary = "#93a4b8";
   const accent = "#38bdf8";
 
   const rows = [
@@ -17,13 +17,13 @@ export function renderStatsCard({ name, stars, commits, prs, issues, contributed
 
   const width = 800;
   const paddingX = 34;
-  const headerH = 86;
+  const headerH = 108;
   const rowH = 50;
   const height = headerH + rows.length * rowH + 18;
 
-  const rankR = 38;
-  const rankCx = width - paddingX - rankR - 6;
-  const rankCy = headerH / 2 + 2;
+  const rankR = 34;
+  const rankCx = width - paddingX - rankR - 8;
+  const rankCy = 50;
   const circ = 2 * Math.PI * rankR;
   const offset = circ * (1 - rankToScore(rankGrade));
   const title = escapeXml(truncateText(`${name || ""}'s GitHub Stats`, 28));
@@ -43,23 +43,64 @@ export function renderStatsCard({ name, stars, commits, prs, issues, contributed
 
   return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img">
   <defs>
+    <linearGradient id="stats-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#101a31"/>
+      <stop offset="55%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#111b2f"/>
+    </linearGradient>
+    <linearGradient id="stats-surface" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#172338"/>
+      <stop offset="100%" stop-color="#121c2d"/>
+    </linearGradient>
     <linearGradient id="stats-accent" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#38bdf8"/>
       <stop offset="100%" stop-color="#60a5fa"/>
     </linearGradient>
+    <radialGradient id="stats-glow-a" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="stats-glow-b" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="stats-sweep" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#7dd3fc" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="stats-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#60a5fa" stroke-width="0.8" opacity="0.08"/>
+    </pattern>
   </defs>
 
-  <rect width="${width}" height="${height}" rx="14" fill="${bg}"/>
+  <rect width="${width}" height="${height}" rx="14" fill="url(#stats-bg)"/>
+  <rect width="${width}" height="${height}" rx="14" fill="url(#stats-grid)"/>
+  <circle cx="170" cy="92" r="180" fill="url(#stats-glow-a)">
+    <animate attributeName="cx" values="140;210;140" dur="18s" repeatCount="indefinite"/>
+    <animate attributeName="cy" values="86;112;86" dur="14s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="654" cy="84" r="210" fill="url(#stats-glow-b)">
+    <animate attributeName="cx" values="654;610;654" dur="16s" repeatCount="indefinite"/>
+    <animate attributeName="cy" values="84;112;84" dur="18s" repeatCount="indefinite"/>
+  </circle>
+  <rect x="-220" y="0" width="360" height="${height}" fill="url(#stats-sweep)" opacity="0.5">
+    <animate attributeName="x" values="-260;820" dur="18s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="0" y="0" width="${width}" height="${height}" rx="14" fill="${bg}" opacity="0.34"/>
   <rect width="${width}" height="${height}" rx="14" fill="none" stroke="${border}" stroke-width="1"/>
-  <path d="M14 0h772c7.732 0 14 6.268 14 14v58H0V14C0 6.268 6.268 0 14 0Z" fill="${surface}"/>
+  <path d="M14 0h772c7.732 0 14 6.268 14 14v78H0V14C0 6.268 6.268 0 14 0Z" fill="url(#stats-surface)" opacity="0.84"/>
 
   <rect x="${paddingX}" y="22" width="120" height="3" rx="999" fill="${accent}"/>
-  <text x="${paddingX}" y="56" font-size="17" font-weight="700" fill="${textPrimary}" font-family="'Segoe UI',Ubuntu,sans-serif">${title}</text>
+  <text x="${paddingX}" y="66" font-size="17" font-weight="700" fill="${textPrimary}" font-family="'Segoe UI',Ubuntu,sans-serif">${title}</text>
 
   <circle cx="${rankCx}" cy="${rankCy}" r="${rankR}" fill="none" stroke="${border}" stroke-width="6"/>
   <circle cx="${rankCx}" cy="${rankCy}" r="${rankR}" fill="none" stroke="url(#stats-accent)"
     stroke-width="6" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"
     stroke-linecap="round" transform="rotate(-90 ${rankCx} ${rankCy})"/>
+  <circle cx="${rankCx}" cy="${rankCy}" r="${rankR + 10}" fill="none" stroke="#7dd3fc" stroke-opacity="0.12" stroke-width="1.5" stroke-dasharray="3 8">
+    <animateTransform attributeName="transform" type="rotate" from="0 ${rankCx} ${rankCy}" to="360 ${rankCx} ${rankCy}" dur="24s" repeatCount="indefinite"/>
+  </circle>
   <text x="${rankCx}" y="${rankCy + 6}" font-size="18" font-weight="800" fill="${textPrimary}"
     font-family="'Segoe UI',Ubuntu,sans-serif" text-anchor="middle">${rankGrade}</text>
 
