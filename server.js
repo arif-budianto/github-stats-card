@@ -4,6 +4,7 @@ import { renderStatsCard } from "./cards/stats-card.js";
 import { renderLangsCard } from "./cards/langs-card.js";
 import { renderProgressCard } from "./cards/progress-card.js";
 import { renderHeroCard } from "./cards/hero-card.js";
+import { renderContactCard } from "./cards/contact-card.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -74,6 +75,15 @@ app.get("/api/hero", async (req, res) => {
     console.error(err);
     sendSVG(res, errorSVG("Failed to fetch hero: " + err.message));
   }
+});
+
+app.get("/api/contact", (req, res) => {
+  sendSVG(res, renderContactCard({
+    label: req.query.label,
+    value: req.query.value,
+    accent: req.query.accent,
+    icon: req.query.icon,
+  }));
 });
 
 app.get("/", (req, res) => {
