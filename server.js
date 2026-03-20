@@ -1,10 +1,11 @@
 import express from "express";
-import { fetchStats, fetchLangs, fetchProgress, fetchHero } from "./fetcher.js";
+import { fetchStats, fetchLangs, fetchProgress, fetchHero, fetchProfileViews } from "./fetcher.js";
 import { renderStatsCard } from "./cards/stats-card.js";
 import { renderLangsCard } from "./cards/langs-card.js";
 import { renderProgressCard } from "./cards/progress-card.js";
 import { renderHeroCard } from "./cards/hero-card.js";
 import { renderContactCard } from "./cards/contact-card.js";
+import { renderViewsCard } from "./cards/views-card.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -84,6 +85,18 @@ app.get("/api/contact", (req, res) => {
     accent: req.query.accent,
     icon: req.query.icon,
   }));
+});
+
+app.get("/api/views", async (req, res) => {
+  const username = req.query.username;
+  if (!username) return sendSVG(res, errorSVG("Missing username parameter"));
+  try {
+    const views = await fetchProfileViews(username);
+    sendSVG(res, renderViewsCard(views));
+  } catch (err) {
+    console.error(err);
+    sendSVG(res, errorSVG("Failed to fetch views: " + err.message));
+  }
 });
 
 app.get("/", (req, res) => {
