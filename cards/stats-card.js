@@ -1,5 +1,6 @@
 export function renderStatsCard({ name, stars, commits, prs, issues, contributed, rank }) {
   const rankGrade = rank || "B+";
+  const rankLabel = rankGrade === "A+" ? "SSS" : rankGrade;
   const bg = "#0f172a";
   const surface = "#162033";
   const border = "#243247";
@@ -101,8 +102,8 @@ export function renderStatsCard({ name, stars, commits, prs, issues, contributed
   <circle cx="${rankCx}" cy="${rankCy}" r="${rankR + 10}" fill="none" stroke="#7dd3fc" stroke-opacity="0.12" stroke-width="1.5" stroke-dasharray="3 8">
     <animateTransform attributeName="transform" type="rotate" from="0 ${rankCx} ${rankCy}" to="360 ${rankCx} ${rankCy}" dur="24s" repeatCount="indefinite"/>
   </circle>
-  <text x="${rankCx}" y="${rankCy + 6}" font-size="18" font-weight="800" fill="${textPrimary}"
-    font-family="'Segoe UI',Ubuntu,sans-serif" text-anchor="middle">${rankGrade}</text>
+  <text x="${rankCx}" y="${rankCy + 6}" font-size="${rankLabel.length > 2 ? 15 : 18}" font-weight="800" fill="${textPrimary}"
+    font-family="'Segoe UI',Ubuntu,sans-serif" text-anchor="middle">${rankLabel}</text>
 
   ${rowsSVG}
 </svg>`;
