@@ -92,7 +92,10 @@ app.get("/api/views", async (req, res) => {
   if (!username) return sendSVG(res, errorSVG("Missing username parameter"));
   try {
     const views = await fetchProfileViews(username);
-    sendSVG(res, renderViewsCard(views));
+    sendSVG(res, renderViewsCard({
+      ...views,
+      trackedLabel: req.query.tracked_label,
+    }));
   } catch (err) {
     console.error(err);
     sendSVG(res, errorSVG("Failed to fetch views: " + err.message));
