@@ -17,11 +17,11 @@ export function renderLangsCard({ langs }) {
     color: l.color || palette[i % palette.length],
   }));
 
-  const width = 440;
-  const donutCx = width - 110;
+  const width = 800;
+  const donutCx = width - 160;
   const donutCy = 100;
-  const donutR = 72;
-  const donutInner = 46;
+  const donutR = 90;
+  const donutInner = 58;
   const topPad = 58;
   const rowH = 26;
   const leftCols = Math.ceil(items.length / 2);
@@ -48,7 +48,7 @@ export function renderLangsCard({ langs }) {
   const legendRows = items.map((item, i) => {
     const col = i < half ? 0 : 1;
     const row = i < half ? i : i - half;
-    const x = col === 0 ? 20 : 230;
+    const x = col === 0 ? 20 : 280;
     const y = topPad + row * rowH;
     return `<g transform="translate(${x},${y})">
       <circle cx="6" cy="6" r="5" fill="${item.color}"/>

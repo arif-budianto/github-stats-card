@@ -16,11 +16,11 @@ export function renderStatsCard({ name, stars, commits, prs, issues, contributed
 
   const rowHeight = 34;
   const topPad = 72;
-  const width = 440;
+  const width = 800;
   const height = topPad + rows.length * rowHeight + 28;
 
   const rankRadius = 34;
-  const rankCx = width - 66;
+  const rankCx = width - 80;
   const rankCy = 36;
   const circumference = 2 * Math.PI * rankRadius;
   const rankScore = rankToScore(rankGrade);
