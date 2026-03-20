@@ -4,10 +4,13 @@ WORKDIR /app
 
 RUN apk add --no-cache git
 
-RUN git clone --depth 1 https://github.com/anuraghazra/github-readme-stats.git
+RUN git clone --depth 1 https://github.com/anuraghazra/github-readme-stats.git && \
+    cd github-readme-stats && \
+    npm install --omit=dev && \
+    cd ..
 
 COPY package.json .
-RUN npm install
+RUN npm install --omit=dev
 
 COPY server.js .
 

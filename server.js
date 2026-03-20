@@ -4,38 +4,44 @@ import { fileURLToPath } from "url";
 import path from "path";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-async function loadHandler(handlerPath) {
-  const mod = await import(handlerPath);
-  return mod.default;
-}
-
 app.get("/api/index", async (req, res) => {
-  const handler = await loadHandler("./github-readme-stats/api/index.js");
-  return handler(req, res);
+  try {
+    const { default: handler } = await import(`./github-readme-stats/api/index.js?t=${Date.now()}`);
+    return handler(req, res);
+  } catch (err) {
+    console.error("Error in /api/index:", err);
+    res.status(500).send(err.message);
+  }
 });
 
 app.get("/api/top-langs", async (req, res) => {
-  const handler = await loadHandler("./github-readme-stats/api/top-langs.js");
-  return handler(req, res);
+  try {
+    const { default: handler } = await import(`./github-readme-stats/api/top-langs.js?t=${Date.now()}`);
+    return handler(req, res);
+  } catch (err) {
+    console.error("Error in /api/top-langs:", err);
+    res.status(500).send(err.message);
+  }
 });
 
 app.get("/api/pin", async (req, res) => {
-  const handler = await loadHandler("./github-readme-stats/api/pin.js");
-  return handler(req, res);
-});
-
-app.get("/api/wakatime", async (req, res) => {
-  const handler = await loadHandler("./github-readme-stats/api/wakatime.js");
-  return handler(req, res);
+  try {
+    const { default: handler } = await import(`./github-readme-stats/api/pin.js?t=${Date.now()}`);
+    return handler(req, res);
+  } catch (err) {
+    console.error("Error in /api/pin:", err);
+    res.status(500).send(err.message);
+  }
 });
 
 app.get("/", (req, res) => {
   res.send("GitHub Stats Server is running.");
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
