@@ -95,12 +95,13 @@ export function renderHeroCard(data, options = {}) {
 
   <g transform="translate(844 48)">
     <rect width="364" height="324" rx="24" fill="url(#hero-side)" stroke="#314457"/>
-    <rect x="24" y="22" width="110" height="34" rx="999" fill="#0a1323" fill-opacity="0.9" stroke="#334155"/>
-    <circle cx="46" cy="39" r="5" fill="#22d3ee">
+    <rect x="24" y="22" width="112" height="36" rx="12" fill="#0a1323" fill-opacity="0.92" stroke="#334155"/>
+    <rect x="25.5" y="23.5" width="109" height="14" rx="10" fill="#ffffff" fill-opacity="0.05"/>
+    <circle cx="46" cy="40" r="5" fill="#22d3ee">
       <animate attributeName="opacity" values="0.45;1;0.45" dur="2.8s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="46" cy="39" r="11" fill="none" stroke="#22d3ee" stroke-opacity="0.24" stroke-width="1.5"/>
-    <text x="64" y="44" fill="#e2e8f0" font-size="13" font-weight="800" font-family="'Segoe UI',Ubuntu,sans-serif" letter-spacing="0.8">PROFILE</text>
+    <circle cx="46" cy="40" r="11" fill="none" stroke="#22d3ee" stroke-opacity="0.24" stroke-width="1.5"/>
+    <text x="64" y="45" fill="#e2e8f0" font-size="13" font-weight="800" font-family="'Segoe UI',Ubuntu,sans-serif" letter-spacing="0.8">PROFILE</text>
 
     <g transform="translate(298 72)">
       <circle cx="0" cy="0" r="38" fill="none" stroke="url(#hero-orbit)" stroke-width="2.5" stroke-opacity="0.9" stroke-dasharray="8 10">
