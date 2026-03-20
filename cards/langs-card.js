@@ -6,37 +6,46 @@ export function renderLangsCard({ langs }) {
   const textSecondary = "#7d8590";
   const palette = ["#0ea5e9","#8b5cf6","#10b981","#f59e0b","#ef4444","#ec4899","#14b8a6","#f97316"];
 
-  const topLangs = langs.slice(0, 8);
-  const total = topLangs.reduce((s, l) => s + l.size, 0);
-  const items = topLangs.map((l, i) => ({
+  const items = langs.slice(0, 8).map((l, i) => {
+    const total = langs.slice(0, 8).reduce((s, x) => s + x.size, 0);
+    return {
+      name: l.name,
+      pct: total > 0 ? (l.size / total) * 100 : 0,
+      color: l.color || palette[i % palette.length],
+    };
+  });
+
+  // Recalculate total after slicing
+  const total = langs.slice(0, 8).reduce((s, l) => s + l.size, 0);
+  const finalItems = langs.slice(0, 8).map((l, i) => ({
     name: l.name,
     pct: total > 0 ? (l.size / total) * 100 : 0,
     color: l.color || palette[i % palette.length],
   }));
 
+  // Layout constants
   const width = 800;
   const paddingX = 28;
   const headerH = 56;
-  const rowH = 28;
-  const legendRows = Math.ceil(items.length / 2);
-  const legendH = legendRows * rowH;
-  const height = headerH + legendH + 28;
+  const rowH = 30;
+  const numRows = Math.ceil(finalItems.length / 2);
+  const legendAreaW = 420; // fixed legend area width, left side
+  const donutZoneX = legendAreaW + paddingX; // donut starts here
+  const donutZoneW = width - donutZoneX - paddingX; // remaining width for donut
+  const donutR = Math.floor(donutZoneW / 2) - 10; // donut radius fits in zone
+  const donutInner = Math.floor(donutR * 0.55);
+  const donutCx = donutZoneX + donutZoneW / 2;
+  const contentH = numRows * rowH;
+  const height = headerH + Math.max(contentH, donutR * 2 + 20) + 24;
+  const donutCy = headerH + Math.max(contentH, donutR * 2 + 20) / 2;
 
-  // Donut zone: right side
-  const donutR = 80;
-  const donutInner = 50;
-  const donutCx = width - paddingX - donutR - 8;
-  const donutCy = headerH + legendH / 2;
-
-  // Legend zone: left side, max width = donutCx - donutR - paddingX - gap
-  const legendMaxW = donutCx - donutR - paddingX - 20;
-  const colW = Math.floor(legendMaxW / 2);
-
+  // Donut arcs
   let cum = 0;
-  const arcs = items.map((item) => {
+  const arcs = finalItems.map((item) => {
     const startA = (cum / 100) * 2 * Math.PI - Math.PI / 2;
     cum += item.pct;
     const endA = (cum / 100) * 2 * Math.PI - Math.PI / 2;
+    if (Math.abs(endA - startA) < 0.001) return "";
     const x1 = donutCx + donutR * Math.cos(startA);
     const y1 = donutCy + donutR * Math.sin(startA);
     const x2 = donutCx + donutR * Math.cos(endA);
@@ -46,30 +55,33 @@ export function renderLangsCard({ langs }) {
     const xi2 = donutCx + donutInner * Math.cos(startA);
     const yi2 = donutCy + donutInner * Math.sin(startA);
     const large = item.pct > 50 ? 1 : 0;
-    return `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)} A${donutR} ${donutR} 0 ${large} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} L${xi1.toFixed(1)} ${yi1.toFixed(1)} A${donutInner} ${donutInner} 0 ${large} 0 ${xi2.toFixed(1)} ${yi2.toFixed(1)}Z" fill="${item.color}" opacity="0.9"/>`;
+    return `<path d="M${f(x1)} ${f(y1)} A${donutR} ${donutR} 0 ${large} 1 ${f(x2)} ${f(y2)} L${f(xi1)} ${f(yi1)} A${donutInner} ${donutInner} 0 ${large} 0 ${f(xi2)} ${f(yi2)}Z" fill="${item.color}" opacity="0.92"/>`;
   }).join("");
 
-  const half = Math.ceil(items.length / 2);
-  const legendSVG = items.map((item, i) => {
+  // Legend rows — 2 columns, each column width = legendAreaW/2
+  const colW = (legendAreaW - paddingX) / 2;
+  const half = Math.ceil(finalItems.length / 2);
+  const legendSVG = finalItems.map((item, i) => {
     const col = i < half ? 0 : 1;
     const row = i < half ? i : i - half;
     const x = paddingX + col * colW;
     const y = headerH + row * rowH + rowH / 2;
+    const nameMaxW = colW - 60;
     return `<g>
-      <circle cx="${x + 6}" cy="${y}" r="5" fill="${item.color}"/>
-      <text x="${x + 18}" y="${y + 4}" font-size="12.5" fill="${textSecondary}" font-family="'Segoe UI',Ubuntu,sans-serif">${escapeXml(item.name)}</text>
-      <text x="${x + colW - 8}" y="${y + 4}" font-size="12.5" font-weight="700" fill="${textPrimary}" font-family="'Segoe UI',Ubuntu,sans-serif" text-anchor="end">${item.pct.toFixed(1)}%</text>
+      <circle cx="${f(x + 6)}" cy="${f(y)}" r="5" fill="${item.color}"/>
+      <text x="${f(x + 18)}" y="${f(y + 4)}" font-size="12.5" fill="${textSecondary}" font-family="'Segoe UI',Ubuntu,sans-serif">${escapeXml(item.name)}</text>
+      <text x="${f(x + colW - 8)}" y="${f(y + 4)}" font-size="12.5" font-weight="700" fill="${textPrimary}" font-family="'Segoe UI',Ubuntu,sans-serif" text-anchor="end">${item.pct.toFixed(1)}%</text>
     </g>`;
   }).join("");
 
-  return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img">
+  return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Most Used Languages">
   <defs>
     <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#0ea5e9"/>
       <stop offset="100%" stop-color="#8b5cf6"/>
     </linearGradient>
-    <filter id="ds">
-      <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#0ea5e9" flood-opacity="0.2"/>
+    <filter id="ds" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#0ea5e9" flood-opacity="0.2"/>
     </filter>
   </defs>
 
@@ -83,11 +95,13 @@ export function renderLangsCard({ langs }) {
 
   ${legendSVG}
 
-  <circle cx="${donutCx}" cy="${donutCy}" r="${donutR}" fill="none" stroke="${border}" stroke-width="1" opacity="0.3"/>
+  <circle cx="${f(donutCx)}" cy="${f(donutCy)}" r="${donutR}" fill="none" stroke="${border}" stroke-width="1" opacity="0.3"/>
   <g filter="url(#ds)">${arcs}</g>
-  <circle cx="${donutCx}" cy="${donutCy}" r="${donutInner}" fill="${bg}"/>
+  <circle cx="${f(donutCx)}" cy="${f(donutCy)}" r="${donutInner}" fill="${bg}"/>
 </svg>`;
 }
+
+const f = (n) => parseFloat(n.toFixed(1));
 
 function escapeXml(str) {
   return String(str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
