@@ -1,7 +1,9 @@
 const GITHUB_API = "https://api.github.com/graphql";
+const REQUEST_TIMEOUT_MS = 8000;
+const LANGS_CACHE_TTL_MS = 1000 * 60 * 30;
+const langsCache = new Map();
 
 export async function fetchStats(username) {
-  const token = process.env.PAT_1;
   const query = `
     query($login: String!) {
       user(login: $login) {
@@ -24,16 +26,7 @@ export async function fetchStats(username) {
     }
   `;
 
-  const res = await fetch(GITHUB_API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `bearer ${token}`,
-    },
-    body: JSON.stringify({ query, variables: { login: username } }),
-  });
-
-  const json = await res.json();
+  const json = await githubGraphQL(query, { login: username });
   const user = json?.data?.user;
   if (!user) throw new Error("User not found or token invalid");
 
@@ -58,7 +51,12 @@ export async function fetchStats(username) {
 }
 
 export async function fetchLangs(username) {
-  const token = process.env.PAT_1;
+  const cacheKey = String(username || "").toLowerCase();
+  const cached = langsCache.get(cacheKey);
+  if (cached && Date.now() - cached.fetchedAt < LANGS_CACHE_TTL_MS) {
+    return cached.data;
+  }
+
   const query = `
     query($login: String!) {
       user(login: $login) {
@@ -73,28 +71,69 @@ export async function fetchLangs(username) {
     }
   `;
 
-  const res = await fetch(GITHUB_API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `bearer ${token}`,
-    },
-    body: JSON.stringify({ query, variables: { login: username } }),
-  });
+  try {
+    const json = await githubGraphQL(query, { login: username });
+    const repos = json?.data?.user?.repositories?.nodes ?? [];
+    const langMap = {};
 
-  const json = await res.json();
-  const repos = json?.data?.user?.repositories?.nodes ?? [];
-
-  const langMap = {};
-  for (const repo of repos) {
-    for (const edge of repo.languages?.edges ?? []) {
-      const name = edge.node.name;
-      if (!langMap[name]) langMap[name] = { name, color: edge.node.color, size: 0 };
-      langMap[name].size += edge.size;
+    for (const repo of repos) {
+      for (const edge of repo.languages?.edges ?? []) {
+        const name = edge.node.name;
+        if (!langMap[name]) langMap[name] = { name, color: edge.node.color, size: 0 };
+        langMap[name].size += edge.size;
+      }
     }
-  }
 
-  return Object.values(langMap).sort((a, b) => b.size - a.size);
+    const data = Object.values(langMap).sort((a, b) => b.size - a.size);
+    if (data.length > 0) {
+      langsCache.set(cacheKey, { data, fetchedAt: Date.now() });
+    }
+
+    return data;
+  } catch (error) {
+    if (cached?.data?.length) {
+      return cached.data;
+    }
+    throw error;
+  }
+}
+
+async function githubGraphQL(query, variables) {
+  const token = process.env.PAT_1;
+  if (!token) throw new Error("PAT_1 is not configured");
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(GITHUB_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `bearer ${token}`,
+      },
+      body: JSON.stringify({ query, variables }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`GitHub API responded ${res.status}`);
+    }
+
+    const json = await res.json();
+    if (json?.errors?.length) {
+      throw new Error(json.errors[0]?.message || "GitHub GraphQL error");
+    }
+
+    return json;
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("GitHub API timeout");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function calcRank({ stars, commits, prs, issues, contributed }) {
