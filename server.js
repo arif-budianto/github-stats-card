@@ -1,48 +1,52 @@
 import express from "express";
-import { fileURLToPath } from "url";
-import path from "path";
+import { fetchStats, fetchLangs } from "./fetcher.js";
+import { renderStatsCard } from "./cards/stats-card.js";
+import { renderLangsCard } from "./cards/langs-card.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use((req, res, next) => {
+function sendSVG(res, svg) {
+  res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=7200");
   res.setHeader("Access-Control-Allow-Origin", "*");
-  next();
-});
+  res.send(svg);
+}
 
-app.get("/api/index", async (req, res) => {
+function errorSVG(message) {
+  return `<svg width="440" height="120" viewBox="0 0 440 120" xmlns="http://www.w3.org/2000/svg">
+  <rect width="440" height="120" rx="14" fill="#0d1117"/>
+  <rect width="440" height="120" rx="14" fill="none" stroke="#21262d" stroke-width="1"/>
+  <text x="20" y="50" font-size="13" fill="#ef4444" font-family="'Segoe UI',Ubuntu,sans-serif">${message}</text>
+</svg>`;
+}
+
+app.get("/api/stats", async (req, res) => {
+  const username = req.query.username;
+  if (!username) return sendSVG(res, errorSVG("Missing username parameter"));
   try {
-    const { default: handler } = await import("./github-readme-stats/api/index.js");
-    return handler(req, res);
+    const data = await fetchStats(username);
+    sendSVG(res, renderStatsCard(data));
   } catch (err) {
-    console.error("Error in /api/index:", err);
-    res.status(500).send(err.message);
+    console.error(err);
+    sendSVG(res, errorSVG("Failed to fetch stats: " + err.message));
   }
 });
 
-app.get("/api/top-langs", async (req, res) => {
+app.get("/api/langs", async (req, res) => {
+  const username = req.query.username;
+  if (!username) return sendSVG(res, errorSVG("Missing username parameter"));
   try {
-    const { default: handler } = await import("./github-readme-stats/api/top-langs.js");
-    return handler(req, res);
+    const langs = await fetchLangs(username);
+    sendSVG(res, renderLangsCard({ langs }));
   } catch (err) {
-    console.error("Error in /api/top-langs:", err);
-    res.status(500).send(err.message);
-  }
-});
-
-app.get("/api/pin", async (req, res) => {
-  try {
-    const { default: handler } = await import("./github-readme-stats/api/pin.js");
-    return handler(req, res);
-  } catch (err) {
-    console.error("Error in /api/pin:", err);
-    res.status(500).send(err.message);
+    console.error(err);
+    sendSVG(res, errorSVG("Failed to fetch langs: " + err.message));
   }
 });
 
 app.get("/", (req, res) => {
-  res.send("GitHub Stats Server is running.");
+  res.send("GitHub Stats Server OK");
 });
 
 app.listen(PORT, "0.0.0.0", () => {
