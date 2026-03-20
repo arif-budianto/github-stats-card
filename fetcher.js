@@ -2,8 +2,10 @@ const GITHUB_API = "https://api.github.com/graphql";
 const REQUEST_TIMEOUT_MS = 8000;
 const LANGS_CACHE_TTL_MS = 1000 * 60 * 30;
 const PROGRESS_CACHE_TTL_MS = 1000 * 60 * 30;
+const HERO_CACHE_TTL_MS = 1000 * 60 * 30;
 const langsCache = new Map();
 const progressCache = new Map();
+const heroCache = new Map();
 
 export async function fetchStats(username) {
   const query = `
@@ -168,6 +170,56 @@ export async function fetchProgress(username) {
     };
 
     progressCache.set(cacheKey, { data, fetchedAt: Date.now() });
+    return data;
+  } catch (error) {
+    if (cached?.data) {
+      return cached.data;
+    }
+    throw error;
+  }
+}
+
+export async function fetchHero(username) {
+  const cacheKey = String(username || "").toLowerCase();
+  const cached = heroCache.get(cacheKey);
+  if (cached && Date.now() - cached.fetchedAt < HERO_CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  const query = `
+    query($login: String!) {
+      user(login: $login) {
+        name
+        login
+        followers {
+          totalCount
+        }
+        repositories(ownerAffiliations: OWNER, isFork: false) {
+          totalCount
+        }
+        contributionsCollection {
+          contributionCalendar {
+            totalContributions
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const json = await githubGraphQL(query, { login: username });
+    const user = json?.data?.user;
+    if (!user) throw new Error("User not found or token invalid");
+
+    const data = {
+      name: user.name || user.login,
+      login: user.login,
+      followers: user.followers?.totalCount || 0,
+      repositories: user.repositories?.totalCount || 0,
+      contributions: user.contributionsCollection?.contributionCalendar?.totalContributions || 0,
+    };
+
+    heroCache.set(cacheKey, { data, fetchedAt: Date.now() });
     return data;
   } catch (error) {
     if (cached?.data) {
