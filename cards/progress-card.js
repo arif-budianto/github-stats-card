@@ -10,7 +10,7 @@ export function renderProgressCard({
   hasRestricted,
 }) {
   const width = 800;
-  const height = 286;
+  const height = 294;
   const paddingX = 32;
   const bg = "#0f172a";
   const border = "#243247";
@@ -83,16 +83,18 @@ export function renderProgressCard({
   <rect x="${paddingX}" y="22" width="128" height="3" rx="999" fill="${accentCyan}"/>
   <text x="${paddingX}" y="58" font-size="17" font-weight="700" fill="${textPrimary}" font-family="'Segoe UI',Ubuntu,sans-serif">Contribution Momentum</text>
 
-  <g transform="translate(${width - paddingX - 118},24)">
-    <rect width="118" height="28" rx="999" fill="#0f172a" opacity="0.56" stroke="#334155" stroke-width="1"/>
-    <circle cx="16" cy="14" r="4" fill="${hasRestricted ? accentCyan : accentBlue}">
-      <animate attributeName="opacity" values="0.4;1;0.4" dur="2.6s" repeatCount="indefinite"/>
+  <g transform="translate(${width - paddingX - 138},20)">
+    <rect width="138" height="40" rx="999" fill="#0b1220" opacity="0.66" stroke="#334155" stroke-width="1.1"/>
+    <rect x="1.5" y="1.5" width="135" height="18" rx="999" fill="#ffffff" opacity="0.05"/>
+    <circle cx="20" cy="20" r="5" fill="${hasRestricted ? accentCyan : accentBlue}">
+      <animate attributeName="opacity" values="0.45;1;0.45" dur="2.6s" repeatCount="indefinite"/>
     </circle>
-    <text x="28" y="18" font-size="11" font-weight="700" fill="${textSecondary}" font-family="'Segoe UI',Ubuntu,sans-serif">${hasRestricted ? "PRIVATE-AWARE" : "PROFILE DATA"}</text>
+    <circle cx="20" cy="20" r="9" fill="none" stroke="${hasRestricted ? accentCyan : accentBlue}" stroke-opacity="0.2" stroke-width="1.5"/>
+    <text x="34" y="25" font-size="12" font-weight="700" letter-spacing="0.3" fill="${textPrimary}" font-family="'Segoe UI',Ubuntu,sans-serif">${hasRestricted ? "PRIVATE-AWARE" : "PROFILE DATA"}</text>
   </g>
 
-  <line x1="266" y1="88" x2="266" y2="234" stroke="#475569" stroke-width="1" opacity="0.55"/>
-  <line x1="534" y1="88" x2="534" y2="234" stroke="#475569" stroke-width="1" opacity="0.55"/>
+  <line x1="266" y1="94" x2="266" y2="242" stroke="#475569" stroke-width="1" opacity="0.55"/>
+  <line x1="534" y1="94" x2="534" y2="242" stroke="#475569" stroke-width="1" opacity="0.55"/>
 
   <g transform="translate(98,124)">
     <text x="0" y="0" font-size="46" font-weight="800" fill="${accentBlue}" font-family="'Segoe UI',Ubuntu,sans-serif" text-anchor="middle">${totalValue}</text>
