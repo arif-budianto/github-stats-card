@@ -178,8 +178,8 @@ export async function fetchProgress(username) {
 }
 
 async function githubGraphQL(query, variables) {
-  const token = process.env.PAT_1;
-  if (!token) throw new Error("PAT_1 is not configured");
+  const token = resolveGithubToken(variables?.login);
+  if (!token) throw new Error(`GitHub token is not configured for ${variables?.login || "this user"}`);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -213,6 +213,22 @@ async function githubGraphQL(query, variables) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function resolveGithubToken(username) {
+  const normalized = normalizeEnvUsername(username);
+  if (!normalized) return null;
+
+  const envKey = `GITHUB_TOKEN__${normalized}`;
+  return process.env[envKey] || null;
+}
+
+function normalizeEnvUsername(username) {
+  return String(username || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }
 
 async function fetchContributionCalendar(username, from, to) {
