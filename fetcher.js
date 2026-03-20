@@ -216,18 +216,34 @@ async function githubGraphQL(query, variables) {
 }
 
 function resolveGithubToken(username) {
-  const normalized = normalizeEnvUsername(username);
-  if (!normalized) return null;
+  const candidates = buildEnvTokenCandidates(username);
+  for (const envKey of candidates) {
+    if (process.env[envKey]) {
+      return process.env[envKey];
+    }
+  }
+  return null;
+}
 
-  const envKey = `GITHUB_TOKEN__${normalized}`;
-  return process.env[envKey] || null;
+function buildEnvTokenCandidates(username) {
+  const raw = String(username || "").trim();
+  if (!raw) return [];
+
+  const normalizedOriginal = normalizeEnvUsername(raw);
+  const normalizedLower = normalizeEnvUsername(raw.toLowerCase());
+  const normalizedUpper = normalizeEnvUsername(raw.toUpperCase());
+
+  return [...new Set([
+    `GITHUB_TOKEN__${normalizedOriginal}`,
+    `GITHUB_TOKEN__${normalizedLower}`,
+    `GITHUB_TOKEN__${normalizedUpper}`,
+  ])];
 }
 
 function normalizeEnvUsername(username) {
   return String(username || "")
     .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
 }
 
