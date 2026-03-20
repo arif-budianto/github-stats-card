@@ -7,6 +7,7 @@ export function renderContactCard(options = {}) {
   const accent = normalizeColor(options.accent, "#38bdf8");
   const icon = renderIcon(cleanText(options.icon || "globe"), accent);
   const valueFontSize = getValueFontSize(valueRaw);
+  const badgeWidth = 136;
 
   return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label} ${value}">
   <defs>
@@ -31,10 +32,10 @@ export function renderContactCard(options = {}) {
   <rect width="${width}" height="${height}" rx="20" fill="url(#contact-grid)"/>
   <ellipse cx="318" cy="28" rx="130" ry="70" fill="url(#contact-glow)"/>
   <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="19" fill="none" stroke="#2a3950"/>
-  <rect x="20" y="16" width="136" height="28" rx="10" fill="#0a1323" fill-opacity="0.92" stroke="#314257"/>
-  <rect x="20" y="16" width="136" height="28" rx="10" fill="url(#contact-accent)" opacity="0.08"/>
+  <rect x="20" y="16" width="${badgeWidth}" height="28" rx="10" fill="#0a1323" fill-opacity="0.92" stroke="#314257"/>
+  <rect x="20" y="16" width="${badgeWidth}" height="28" rx="10" fill="url(#contact-accent)" opacity="0.08"/>
   <rect x="26" y="20" width="28" height="20" rx="7" fill="${withOpacity(accent, 0.14)}" stroke="${withOpacity(accent, 0.18)}"/>
-  <g transform="translate(30 22.5) scale(0.68)">${icon}</g>
+  <svg x="32" y="22" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">${icon}</svg>
   <text x="68" y="35" fill="#dbeafe" font-size="11" font-weight="800" letter-spacing="1.2" font-family="'Segoe UI',Ubuntu,sans-serif">${label}</text>
   <text x="20" y="68" fill="#f8fafc" font-size="${valueFontSize}" font-weight="800" font-family="'Segoe UI',Ubuntu,sans-serif">${value}</text>
   <rect x="20" y="78" width="96" height="3" rx="999" fill="url(#contact-accent)"/>
