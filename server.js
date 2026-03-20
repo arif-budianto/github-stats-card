@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 function sendSVG(res, svg) {
   res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
-  res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=7200");
+  res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.send(svg);
 }
