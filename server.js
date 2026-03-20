@@ -1,8 +1,9 @@
 import express from "express";
-import { fetchStats, fetchLangs, fetchProgress } from "./fetcher.js";
+import { fetchStats, fetchLangs, fetchProgress, fetchHero } from "./fetcher.js";
 import { renderStatsCard } from "./cards/stats-card.js";
 import { renderLangsCard } from "./cards/langs-card.js";
 import { renderProgressCard } from "./cards/progress-card.js";
+import { renderHeroCard } from "./cards/hero-card.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,6 +56,23 @@ app.get("/api/progress", async (req, res) => {
   } catch (err) {
     console.error(err);
     sendSVG(res, errorSVG("Failed to fetch progress: " + err.message));
+  }
+});
+
+app.get("/api/hero", async (req, res) => {
+  const username = req.query.username;
+  if (!username) return sendSVG(res, errorSVG("Missing username parameter"));
+  try {
+    const hero = await fetchHero(username);
+    sendSVG(res, renderHeroCard(hero, {
+      titlePrimary: req.query.title_primary,
+      titleSecondary: req.query.title_secondary,
+      experience: req.query.experience,
+      tagline: req.query.tagline,
+    }));
+  } catch (err) {
+    console.error(err);
+    sendSVG(res, errorSVG("Failed to fetch hero: " + err.message));
   }
 });
 
