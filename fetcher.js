@@ -1,7 +1,9 @@
 const GITHUB_API = "https://api.github.com/graphql";
 const REQUEST_TIMEOUT_MS = 8000;
 const LANGS_CACHE_TTL_MS = 1000 * 60 * 30;
+const PROGRESS_CACHE_TTL_MS = 1000 * 60 * 30;
 const langsCache = new Map();
+const progressCache = new Map();
 
 export async function fetchStats(username) {
   const query = `
@@ -98,6 +100,83 @@ export async function fetchLangs(username) {
   }
 }
 
+export async function fetchProgress(username) {
+  const cacheKey = String(username || "").toLowerCase();
+  const cached = progressCache.get(cacheKey);
+  if (cached && Date.now() - cached.fetchedAt < PROGRESS_CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  const yearsQuery = `
+    query($login: String!) {
+      user(login: $login) {
+        createdAt
+        contributionsCollection {
+          contributionYears
+          hasAnyRestrictedContributions
+          restrictedContributionsCount
+        }
+      }
+    }
+  `;
+
+  try {
+    const yearsJson = await githubGraphQL(yearsQuery, { login: username });
+    const user = yearsJson?.data?.user;
+    if (!user) throw new Error("User not found or token invalid");
+
+    const years = [...(user.contributionsCollection?.contributionYears ?? [])].sort((a, b) => a - b);
+    const joinedAt = user.createdAt;
+    const restrictedCount = user.contributionsCollection?.restrictedContributionsCount ?? 0;
+    const hasRestricted = Boolean(user.contributionsCollection?.hasAnyRestrictedContributions || restrictedCount > 0);
+
+    const allDays = [];
+    let totalContributions = 0;
+
+    for (const year of years) {
+      const from = `${year}-01-01T00:00:00Z`;
+      const to = `${year}-12-31T23:59:59Z`;
+      const calendar = await fetchContributionCalendar(username, from, to);
+      totalContributions += calendar.totalContributions || 0;
+
+      for (const week of calendar.weeks ?? []) {
+        for (const day of week.contributionDays ?? []) {
+          allDays.push({
+            date: day.date,
+            count: day.contributionCount || 0,
+          });
+        }
+      }
+    }
+
+    const sortedDays = allDays
+      .filter((day) => day.date)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const { current, longest } = calculateStreaks(sortedDays);
+    const data = {
+      totalContributions,
+      joinedAt,
+      currentStreak: current.length,
+      currentStreakStart: current.start,
+      currentStreakEnd: current.end,
+      longestStreak: longest.length,
+      longestStreakStart: longest.start,
+      longestStreakEnd: longest.end,
+      hasRestricted,
+      restrictedCount,
+    };
+
+    progressCache.set(cacheKey, { data, fetchedAt: Date.now() });
+    return data;
+  } catch (error) {
+    if (cached?.data) {
+      return cached.data;
+    }
+    throw error;
+  }
+}
+
 async function githubGraphQL(query, variables) {
   const token = process.env.PAT_1;
   if (!token) throw new Error("PAT_1 is not configured");
@@ -134,6 +213,100 @@ async function githubGraphQL(query, variables) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function fetchContributionCalendar(username, from, to) {
+  const query = `
+    query($login: String!, $from: DateTime!, $to: DateTime!) {
+      user(login: $login) {
+        contributionsCollection(from: $from, to: $to) {
+          contributionCalendar {
+            totalContributions
+            weeks {
+              contributionDays {
+                contributionCount
+                date
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const json = await githubGraphQL(query, { login: username, from, to });
+  return json?.data?.user?.contributionsCollection?.contributionCalendar ?? { totalContributions: 0, weeks: [] };
+}
+
+function calculateStreaks(days) {
+  let longest = { length: 0, start: null, end: null };
+  let currentWindow = null;
+  let lastPositiveIndex = -1;
+
+  for (let i = 0; i < days.length; i += 1) {
+    if (days[i].count > 0) {
+      lastPositiveIndex = i;
+      break;
+    }
+  }
+
+  let activeRun = null;
+  for (let i = 0; i < days.length; i += 1) {
+    const day = days[i];
+    if (day.count > 0) {
+      if (!activeRun) {
+        activeRun = { length: 1, start: day.date, end: day.date };
+      } else if (isNextDay(activeRun.end, day.date)) {
+        activeRun.length += 1;
+        activeRun.end = day.date;
+      } else {
+        if (activeRun.length > longest.length) {
+          longest = { ...activeRun };
+        }
+        activeRun = { length: 1, start: day.date, end: day.date };
+      }
+      lastPositiveIndex = i;
+    }
+  }
+
+  if (activeRun && activeRun.length > longest.length) {
+    longest = { ...activeRun };
+  }
+
+  if (lastPositiveIndex === -1) {
+    return {
+      current: { length: 0, start: null, end: null },
+      longest,
+    };
+  }
+
+  let current = { length: 0, start: null, end: null };
+  for (let i = lastPositiveIndex; i >= 0; i -= 1) {
+    const day = days[i];
+    if (day.count === 0) {
+      break;
+    }
+
+    if (!current.length) {
+      current = { length: 1, start: day.date, end: day.date };
+      continue;
+    }
+
+    if (isNextDay(day.date, current.start)) {
+      current.length += 1;
+      current.start = day.date;
+    } else {
+      break;
+    }
+  }
+
+  return { current, longest };
+}
+
+function isNextDay(previousDate, nextDate) {
+  const previous = new Date(`${previousDate}T00:00:00Z`);
+  const next = new Date(`${nextDate}T00:00:00Z`);
+  return next.getTime() - previous.getTime() === 24 * 60 * 60 * 1000;
 }
 
 function calcRank({ stars, commits, prs, issues, contributed }) {
