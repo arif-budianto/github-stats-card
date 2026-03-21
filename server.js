@@ -10,10 +10,14 @@ import { renderViewsCard } from "./cards/views-card.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-function sendSVG(res, svg) {
+function sendSVG(res, svg, options = {}) {
+  const cacheControl = options.cacheControl || "no-cache";
   res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
-  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Cache-Control", cacheControl);
   res.setHeader("Access-Control-Allow-Origin", "*");
+  if (options.pragma) res.setHeader("Pragma", options.pragma);
+  if (options.expires) res.setHeader("Expires", options.expires);
+  if (options.surrogateControl) res.setHeader("Surrogate-Control", options.surrogateControl);
   res.send(svg);
 }
 
@@ -89,16 +93,31 @@ app.get("/api/contact", (req, res) => {
 
 app.get("/api/views", async (req, res) => {
   const username = req.query.username;
-  if (!username) return sendSVG(res, errorSVG("Missing username parameter"));
+  if (!username) return sendSVG(res, errorSVG("Missing username parameter"), {
+    cacheControl: "no-store, no-cache, max-age=0, must-revalidate",
+    pragma: "no-cache",
+    expires: "0",
+    surrogateControl: "no-store",
+  });
   try {
     const views = await fetchProfileViews(username);
     sendSVG(res, renderViewsCard({
       ...views,
       trackedLabel: req.query.tracked_label,
-    }));
+    }), {
+      cacheControl: "no-store, no-cache, max-age=0, must-revalidate",
+      pragma: "no-cache",
+      expires: "0",
+      surrogateControl: "no-store",
+    });
   } catch (err) {
     console.error(err);
-    sendSVG(res, errorSVG("Failed to fetch views: " + err.message));
+    sendSVG(res, errorSVG("Failed to fetch views: " + err.message), {
+      cacheControl: "no-store, no-cache, max-age=0, must-revalidate",
+      pragma: "no-cache",
+      expires: "0",
+      surrogateControl: "no-store",
+    });
   }
 });
 

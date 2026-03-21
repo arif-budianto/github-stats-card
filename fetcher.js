@@ -3,12 +3,13 @@ const REQUEST_TIMEOUT_MS = 8000;
 const LANGS_CACHE_TTL_MS = 1000 * 60 * 30;
 const PROGRESS_CACHE_TTL_MS = 1000 * 60 * 30;
 const HERO_CACHE_TTL_MS = 1000 * 60 * 30;
-const VIEWS_CACHE_TTL_MS = 1000 * 60;
+const VIEWS_CACHE_TTL_MS = 1000 * 10;
 const KOMAREV_VIEWS_URL = "https://komarev.com/ghpvc/";
 const langsCache = new Map();
 const progressCache = new Map();
 const heroCache = new Map();
 const viewsCache = new Map();
+const viewsInFlight = new Map();
 
 export async function fetchStats(username) {
   const query = `
@@ -239,42 +240,56 @@ export async function fetchProfileViews(username) {
     return cached.data;
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-  try {
-    const url = `${KOMAREV_VIEWS_URL}?username=${encodeURIComponent(username || "")}&label=PROFILE%20VIEWS&color=0ea5e9&style=flat-square`;
-    const res = await fetch(url, {
-      headers: {
-        Accept: "image/svg+xml",
-      },
-      signal: controller.signal,
-    });
-
-    if (!res.ok) {
-      throw new Error(`Views badge responded ${res.status}`);
-    }
-
-    const svg = await res.text();
-    const count = extractViewsCount(svg);
-    const data = {
-      username: username || "",
-      count,
-    };
-
-    viewsCache.set(cacheKey, { data, fetchedAt: Date.now() });
-    return data;
-  } catch (error) {
-    if (cached?.data) {
-      return cached.data;
-    }
-    if (error?.name === "AbortError") {
-      throw new Error("Views counter timeout");
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeout);
+  const pending = viewsInFlight.get(cacheKey);
+  if (pending) {
+    return pending;
   }
+
+  const fetchPromise = (async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const bucket = Math.floor(Date.now() / VIEWS_CACHE_TTL_MS) * VIEWS_CACHE_TTL_MS;
+      const url = `${KOMAREV_VIEWS_URL}?username=${encodeURIComponent(username || "")}&label=PROFILE%20VIEWS&color=0ea5e9&style=flat-square&cb=${bucket}`;
+      const res = await fetch(url, {
+        headers: {
+          Accept: "image/svg+xml",
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        throw new Error(`Views badge responded ${res.status}`);
+      }
+
+      const svg = await res.text();
+      const count = extractViewsCount(svg);
+      const data = {
+        username: username || "",
+        count,
+      };
+
+      viewsCache.set(cacheKey, { data, fetchedAt: Date.now() });
+      return data;
+    } catch (error) {
+      if (cached?.data) {
+        return cached.data;
+      }
+      if (error?.name === "AbortError") {
+        throw new Error("Views counter timeout");
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+      viewsInFlight.delete(cacheKey);
+    }
+  })();
+
+  viewsInFlight.set(cacheKey, fetchPromise);
+  return fetchPromise;
 }
 
 async function githubGraphQL(query, variables) {
