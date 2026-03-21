@@ -9,6 +9,7 @@ import { renderViewsCard } from "./cards/views-card.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.disable("etag");
 
 function sendSVG(res, svg, options = {}) {
   const cacheControl = options.cacheControl || "no-cache";
@@ -17,6 +18,7 @@ function sendSVG(res, svg, options = {}) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (options.pragma) res.setHeader("Pragma", options.pragma);
   if (options.expires) res.setHeader("Expires", options.expires);
+  if (options.lastModified) res.setHeader("Last-Modified", options.lastModified);
   if (options.surrogateControl) res.setHeader("Surrogate-Control", options.surrogateControl);
   res.send(svg);
 }
@@ -97,6 +99,7 @@ app.get("/api/views", async (req, res) => {
     cacheControl: "no-store, no-cache, max-age=0, must-revalidate",
     pragma: "no-cache",
     expires: "0",
+    lastModified: new Date().toUTCString(),
     surrogateControl: "no-store",
   });
   try {
@@ -108,6 +111,7 @@ app.get("/api/views", async (req, res) => {
       cacheControl: "no-store, no-cache, max-age=0, must-revalidate",
       pragma: "no-cache",
       expires: "0",
+      lastModified: new Date().toUTCString(),
       surrogateControl: "no-store",
     });
   } catch (err) {
@@ -116,6 +120,7 @@ app.get("/api/views", async (req, res) => {
       cacheControl: "no-store, no-cache, max-age=0, must-revalidate",
       pragma: "no-cache",
       expires: "0",
+      lastModified: new Date().toUTCString(),
       surrogateControl: "no-store",
     });
   }
